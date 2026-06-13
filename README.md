@@ -7,7 +7,11 @@ Ngày lập báo cáo: 13/06/2026
 Trong tuần này, dự án HR Helpdesk AI đã được triển khai từ phần scaffold ban đầu đến một bản demo chạy được end-to-end. Hệ thống hiện có backend FastAPI, luồng chat có xác thực, RAG-lite kèm citations, RBAC/guardrails, tra cứu chỉ số HR cá nhân, escalation ticket, trending pin, feedback, frontend tĩnh và bộ kiểm thử hợp đồng/e2e.
 
 Mục tiêu chính đã hoàn thành: biến ý tưởng "trợ lý HR nội bộ" thành một MVP có thể demo tại `http://127.0.0.1:8000/app`, với API contract rõ ràng và báo cáo kiểm thử tại `eval/results/report.md`.
+### 1.1. Tài liệu đã cập nhật
 
+- [`flow/03-prd.md`](flow/03-prd.md): PRD và success metrics.
+- [`flow/05-contract.md`](flow/05-contract.md): API contract.
+- [`cards/C-001`](cards/C-001-scaffold-contract-baseline.md) đến [`cards/C-010`](cards/C-010-e2e-verify-demo.md): trạng thái và evidence theo từng card.
 ## 2. Các module đã triển khai
 
 | Module | Card | Mô tả | File chính |
@@ -202,11 +206,6 @@ Nguồn: `eval/results/report.md`
 | Escalation tickets | 3 | 3 | PASS |
 | Trend pin after similar queries | 1 | Nghi phep | PASS |
 
-## 10. Tài liệu đã cập nhật
-
-- [`flow/03-prd.md`](flow/03-prd.md): PRD và success metrics.
-- [`flow/05-contract.md`](flow/05-contract.md): API contract.
-- [`cards/C-001`](cards/C-001-scaffold-contract-baseline.md) đến [`cards/C-010`](cards/C-010-e2e-verify-demo.md): trạng thái và evidence theo từng card.
 
 ## 11. Trạng thái hiện tại
 
