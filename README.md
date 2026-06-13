@@ -204,10 +204,9 @@ Nguồn: `eval/results/report.md`
 
 ## 10. Tài liệu đã cập nhật
 
-- `flow/03-prd.md`: PRD và success metrics.
-- `flow/05-contract.md`: API contract.
-- `eval/results/report.md`: báo cáo kiểm thử C-010.
-- `cards/C-001` đến `cards/C-010`: trạng thái và evidence theo từng card.
+- [`flow/03-prd.md`](flow/03-prd.md): PRD và success metrics.
+- [`flow/05-contract.md`](flow/05-contract.md): API contract.
+- [`cards/C-001`](cards/C-001-scaffold-contract-baseline.md) đến [`cards/C-010`](cards/C-010-e2e-verify-demo.md): trạng thái và evidence theo từng card.
 
 ## 11. Trạng thái hiện tại
 
