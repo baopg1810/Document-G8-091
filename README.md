@@ -77,7 +77,7 @@ Luồng xử lý:
 ### 4.2 Retrieval
 
 - Retrieval nằm ở `src/services/retrieval.py`.
-- Dùng lexical embedding đơn giản để MVP chạy offline, không phụ thuộc API ngoài.
+- Dùng gemini embedding cho MVP.
 - Có `MIN_SCORE` và `TOP_K` để kiểm soát citations.
 - RBAC được áp dụng trước khi trả citation, tránh để model thấy tài liệu ngoài quyền.
 
@@ -122,7 +122,6 @@ Module `src/services/tickets.py` hỗ trợ:
 - HR admin list ticket.
 - HR admin update status, assignee.
 
-Kết quả e2e xác nhận 3 sensitive prompts tạo 3 ticket.
 
 ## 7. Trending & feedback
 
@@ -135,7 +134,6 @@ Module `src/services/trending.py`:
 - HR admin chạy `/api/v1/admin/trending/run`.
 - Khi số lượng câu hỏi tương tự đạt threshold, hệ thống tạo trend pin.
 
-Kết quả e2e: topic `Nghi phep` được pin sau các câu hỏi tương tự.
 
 ### 7.2 Feedback
 
@@ -206,8 +204,6 @@ Nguồn: `eval/results/report.md`
 
 ## 10. Tài liệu đã cập nhật
 
-- `README.md`: hướng dẫn chạy app, mở `/app`, chạy e2e.
-- `ARCHITECTURE.md`: mô tả kiến trúc tổng thể.
 - `flow/03-prd.md`: PRD và success metrics.
 - `flow/05-contract.md`: API contract.
 - `eval/results/report.md`: báo cáo kiểm thử C-010.
@@ -228,11 +224,4 @@ Hệ thống đã đạt trạng thái MVP demo-ready:
 - Feedback hoạt động.
 - E2E verification đạt toàn bộ metric PRD.
 
-## 12. Đề xuất việc tiếp theo
 
-1. Thay in-memory stores bằng SQLite/Postgres để dữ liệu không mất khi restart.
-2. Tích hợp vector database thật như Chroma hoặc pgvector.
-3. Tích hợp Gemini model thật cho phần answer synthesis và trend summary.
-4. Bổ sung giao diện admin quản lý feedback.
-5. Thêm audit log cho chat, citation, role, ticket action.
-6. Chuẩn bị Docker/demo deployment để người khác truy cập không cần chạy local.
