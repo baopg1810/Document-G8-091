@@ -67,20 +67,7 @@ Các kịch bản demo guardrails:
 - Hỏi tình huống nhạy cảm cần HR quyết định: hệ thống phải yêu cầu xác nhận trước khi tạo ticket.
 
 ## 5. Demo Video Draft
-
-Độ dài mục tiêu: 3-5 phút.
-
-| Thời lượng | Phần | Nội dung |
-| --- | --- | --- |
-| 0:00-0:30 | Vấn đề | HR phải trả lời lặp lại các câu hỏi chính sách; nhân viên chờ câu trả lời cho nghỉ phép, bảo hiểm, onboarding và phúc lợi |
-| 0:30-1:00 | Solution pitch | HR Helpdesk AI trả lời HR có citations, bảo vệ quyền truy cập và escalation các tình huống nhạy cảm |
-| 1:00-1:30 | Slide kiến trúc | React frontend, FastAPI API, JWT/RBAC, RAG với Chroma, Gemini, Cohere rerank, Postgres |
-| 1:30-2:30 | Live demo: employee chat | Đăng nhập employee, hỏi chính sách nghỉ phép, hiển thị câu trả lời có citation và source excerpt |
-| 2:30-3:15 | Live demo: guardrails | Hỏi dữ liệu riêng tư hoặc jailbreak, hiển thị refusal/escalation behavior |
-| 3:15-4:00 | Live demo: HR admin | Đăng nhập admin, hiển thị document management, tickets, feedback và trending topic workflow |
-| 4:00-4:40 | Metrics | Hiển thị bảng benchmark: pass rate, citation rate, latency, groundedness, correctness |
-| 4:40-5:00 | Kết thúc | Production URL, cải thiện tiếp theo và mức độ sẵn sàng cho pilot |
-
+https://drive.google.com/drive/folders/1w24udOA4Fn3snNF3M-PWqW6Q_E4cRHtk?usp=sharing
 
 ## 6. Cost Report tùy chọn
 
