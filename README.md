@@ -1,231 +1,120 @@
-# Weekly Report - HR Helpdesk AI
+# Báo cáo - HR Helpdesk AI
 
-Ngày lập báo cáo: 13/06/2026
+## 1. Deliverables
 
-## 1. Tổng quan
+| Deliverable | Trạng thái | Link / Ghi chú |
+| --- | --- | --- |
+| Deployed production URL | Đã có | https://c2-app-091.up.railway.app/ |
+| Evaluation metrics | Đã có | Baseline lấy từ `eval/results/benchmark_results.json`, chạy lúc `2026-06-27T11:45:29Z` |
+| Guardrails | Đã có | RBAC, bộ lọc truy xuất, luật an toàn local, kiểm soát citation, xác nhận escalation |
+| Demo video draft | Đã có bản nháp | TODO: thêm link video demo 3-5 phút sau khi quay |
+| Cost report | Đã có ước tính nháp | Ước tính chi phí AI biến đổi bên dưới; hạ tầng/rerank sẽ chốt sau khi chọn nền tảng deploy |
 
-Trong tuần này, dự án HR Helpdesk AI đã được triển khai từ phần scaffold ban đầu đến một bản demo chạy được end-to-end. Hệ thống hiện có backend FastAPI, luồng chat có xác thực, RAG-lite kèm citations, RBAC/guardrails, tra cứu chỉ số HR cá nhân, escalation ticket, trending pin, feedback, frontend tĩnh và bộ kiểm thử hợp đồng/e2e.
+## 2. Tóm tắt sản phẩm
 
-Mục tiêu chính đã hoàn thành: biến ý tưởng "trợ lý HR nội bộ" thành một MVP có thể demo tại `http://127.0.0.1:8000/app`, với API contract rõ ràng và báo cáo kiểm thử tại `eval/results/report.md`.
-### 1.1. Tài liệu đã cập nhật
+HR Helpdesk AI là ứng dụng helpdesk nội bộ cho phòng nhân sự. Nhân viên có thể hỏi các câu hỏi về chính sách HR, nhận câu trả lời có trích dẫn từ tài liệu nội bộ, tra cứu chỉ số HR của chính mình một cách an toàn, và chuyển các tình huống nhạy cảm hoặc chưa chắc chắn sang HR xử lý. HR admin có thể quản lý tài liệu, xem ticket, theo dõi feedback và phát hiện các chủ đề đang được hỏi lặp lại.
 
-- [`flow/03-prd.md`](flow/03-prd.md): PRD và success metrics.
-- [`flow/05-contract.md`](flow/05-contract.md): API contract.
-- [`cards/C-001`](cards/C-001-scaffold-contract-baseline.md) đến [`cards/C-010`](cards/C-010-e2e-verify-demo.md): trạng thái và evidence theo từng card.
+Tech stack chính:
 
-### 1.2. `flow` và `cards`
+- Backend: FastAPI, SQLAlchemy async, Alembic, JWT auth, Chroma vector store.
+- Frontend: React 18, Vite, TypeScript.
+- AI: Gemini cho generation và embedding, Cohere rerank khi bật.
+- Production target: ứng dụng Docker hóa, dùng Postgres và Chroma data được lưu bền vững.
 
-- ** `flow/`**: Chứa tài liệu quy trình thiết kế và đặc tả kỹ thuật hệ thống theo trình tự phát triển dự án, bao gồm ý tưởng sơ khởi (`00-idea.md`), nghiên cứu công nghệ (`01-research.md`), định hình phạm vi (`02-scope.md`), tài liệu yêu cầu sản phẩm (`03-prd.md`), quyết định kiến trúc (`04-adr.md`), và thiết kế API contract (`05-contract.md`).
-- ** `cards/`**: Chứa các thẻ công việc (Task/Kanban Cards từ `C-001` đến `C-010`) chia nhỏ tiến trình triển khai. Mỗi thẻ định rõ phạm vi công việc (Scope), danh sách file được phép chỉnh sửa (Allowed files), tiêu chí xác minh (Verify) và bằng chứng hoàn thành thực tế (Evidence).
+## 3. Evaluation Metrics
 
-## 2. Các module đã triển khai
+Nguồn baseline: `eval/results/benchmark_results.json`.
 
-| Module | Card | Mô tả | File chính |
-|--------|------|-------|-----------|
-| API scaffold & contract baseline | C-001 | Khởi tạo FastAPI app, health check, OpenAPI/docs, cấu trúc route baseline. | `src/main.py`, `src/api/routes.py`, `flow/05-contract.md` |
-| Authentication & demo users | C-002 | Đăng nhập JWT demo, user context, endpoint `/me`, chat yêu cầu token. | `src/services/auth.py`, `src/services/demo_users.py`, `src/api/routes.py` |
-| Document ingestion & RAG-lite | C-003 | HR admin upload tài liệu, chunking nội dung, embedding lexical, truy hồi citations. | `src/services/documents.py`, `src/services/retrieval.py`, `src/services/llm.py` |
-| RBAC & guardrails | C-004 | Lọc tài liệu theo role/department, chặn jailbreak/out-of-scope/sensitive prompt, không trả dữ liệu ngoài quyền. | `src/services/guardrails.py`, `src/services/retrieval.py` |
-| HR metrics lookup | C-005 | Function-calling style lookup cho số ngày phép, trạng thái bảo hiểm, xét duyệt khen thưởng của chính user. | `src/services/hris.py`, `src/api/routes.py` |
-| Escalation tickets | C-005 | Tạo ticket tự động cho tình huống nhạy cảm/no-source/out-of-scope và cho phép HR admin cập nhật ticket. | `src/services/tickets.py`, `src/api/routes.py` |
-| Trending pins | C-006 | Ghi log query, gom nhóm topic, tạo pinned notice khi vượt threshold 5 câu hỏi tương tự. | `src/services/trending.py` |
-| Feedback | C-006 | Người dùng đánh giá câu trả lời helpful/not helpful theo `message_id`. | `src/services/feedback.py`, `src/api/routes.py` |
-| Contract/API tests | C-007 | Kiểm thử shape của API, auth, documents, RBAC, tickets, metrics, trending, feedback. | `tests/test_api/**`, `tests/test_agents/**` |
-| UI mock | C-008 | Mockup HTML mô tả trải nghiệm chat nhân viên và dashboard HR admin. | `mockups/hr-helpdesk.html` |
-| Static frontend app | C-009 | Frontend tĩnh được serve tại `/app`, gọi API thật để login/chat/upload/run trend/ticket/feedback. | `src/static/hr-helpdesk.html`, `src/main.py` |
-| End-to-end verification | C-010 | Script/test chạy demo live, đo metric PRD, ghi báo cáo kết quả. | `scripts/e2e_demo.py`, `tests/e2e/test_demo_flow.py`, `eval/results/report.md` |
+Dataset: `So Tay Nhan Vien Golden Dataset`, phiên bản `2026-06-27`, gồm 20 test cases.
 
-## 3. Chi tiết backend
+| Metric | Baseline / Hiện tại | Target | Ghi chú |
+| --- | ---: | ---: | --- |
+| Pass rate | 90.0% | >= 95% cho mục tiêu cuối | 18 passed / 20 total cases |
+| Citation rate | 90.0% | >= 95% | 18 cited / 20 expected-cited cases |
+| P95 latency | 3,2342.89 ms | < 2000 ms | Điểm nghẽn hiện tại cần tối ưu trước demo cuối |
+| P95 TTFT | 2670 ms | < 2000 ms | Thời gian tới token đầu tiên / phản hồi stream đầu tiên |
+| Groundedness score | 0.873 | >= 0.9 | Đo mức độ câu trả lời được chống lưng bởi nguồn truy xuất |
+| Relevance | 0.836 | >= 0.9 | Đo mức độ liên quan |
+| Correctness score | 0.927 | >= 0.9 | Đã vượt target trong benchmark hiện tại |
 
-### 3.1 FastAPI application
+Ưu tiên cải thiện tiếp theo:
 
-- App chính nằm ở `src/main.py`.
-- API prefix: `/api/v1`.
-- Static frontend được mount qua `/static` và route `/app`.
-- Health endpoint: `GET /health`.
-- OpenAPI docs: `GET /docs`, `GET /openapi.json`.
+1. Tăng citation rate bằng cách siết ngưỡng retrieval và từ chối trả lời khi thiếu nguồn phù hợp.
+2. Giảm P95 latency bằng cách giới hạn số chunk ứng viên, cache embedding/retrieval khi phù hợp, và chỉ bật rerank cho các query cần độ tin cậy cao.
+3. Tăng pass rate bằng cách sửa các câu trả lời sai ở nhóm company-profile và bổ sung golden examples có mục tiêu.
 
-### 3.2 Authentication
+## 4. Guardrails
 
-- Endpoint đăng nhập: `POST /api/v1/auth/login`.
-- Demo users:
-  - `employee@example.com` / `employee123`
-  - `admin@example.com` / `admin123`
-- Token JWT được dùng để xác định role và user hiện tại.
-- Endpoint `/api/v1/me` trả thông tin user đang đăng nhập.
+Các guardrails đã triển khai hoặc đã thiết kế cho production pilot:
 
-### 3.3 Chat orchestration
+| Guardrail | Mục đích | Cách triển khai |
+| --- | --- | --- |
+| JWT auth và RBAC | Ngăn truy cập trái quyền | Các protected API routes lấy current user từ DB-backed JWT dependency |
+| Bộ lọc retrieval theo role và department | Ngăn người dùng truy xuất tài liệu ngoài phạm vi quyền | Filter được áp dụng trước bước generation, không chỉ lọc sau khi sinh câu trả lời |
+| Ranh giới dữ liệu HR cá nhân | Ngăn rò rỉ dữ liệu chéo giữa nhân viên | Role employee chỉ được xem HR metrics của chính mình; không chấp nhận `employee_id` tùy ý |
+| Chặn jailbreak và câu hỏi ngoài phạm vi | Ngăn prompt injection và việc dùng app ngoài mục đích HR | Guardrails local dạng deterministic rules chặn jailbreak, câu hỏi không liên quan và yêu cầu nhạy cảm |
+| Yêu cầu citation | Giảm hallucination trong câu trả lời về chính sách | Câu trả lời policy cần có citations hoặc từ chối nếu không tìm thấy nguồn liên quan |
+| Human escalation | Tránh để AI tự quyết định tình huống HR nhạy cảm | Chat trả về escalation action; frontend yêu cầu user xác nhận trước khi tạo ticket |
+| Audit/debug logging | Hỗ trợ review và cải thiện chất lượng | Lưu model name, retrieval ids, citations, role, feedback và escalation reason |
+| Kiểm tra production secrets | Tránh deploy bằng cấu hình mặc định không an toàn | Production yêu cầu `JWT_SECRET_KEY` mạnh, CORS allowlist rõ ràng, Gemini key và DB migration |
 
-Endpoint chính: `POST /api/v1/chat`.
+Các kịch bản demo guardrails:
 
-Luồng xử lý:
+- Hỏi dữ liệu HR riêng tư của một nhân viên khác: hệ thống phải từ chối hoặc escalates.
+- Hỏi prompt jailbreak như "ignore all previous rules": hệ thống phải chặn.
+- Hỏi câu ngoài phạm vi HR: hệ thống phải từ chối hoặc route sang ticket.
+- Hỏi câu chính sách hợp lệ: hệ thống phải trả lời kèm citations.
+- Hỏi tình huống nhạy cảm cần HR quyết định: hệ thống phải yêu cầu xác nhận trước khi tạo ticket.
 
-1. Kiểm tra token và lấy current user.
-2. Nếu câu hỏi là tra cứu chỉ số cá nhân, gọi HRIS mock.
-3. Nếu guardrail phát hiện sensitive/out-of-scope/jailbreak, từ chối hoặc tạo escalation ticket.
-4. Nếu là câu hỏi chính sách, truy hồi tài liệu phù hợp quyền truy cập.
-5. Nếu có citation, trả lời kèm nguồn.
-6. Nếu không có nguồn phù hợp nhưng là câu hỏi HR, tạo ticket `no_source`.
-7. Ghi query vào trending log.
+## 5. Demo Video Draft
 
-## 4. Chi tiết AI/RAG
+Độ dài mục tiêu: 3-5 phút.
 
-### 4.1 Document ingestion
+| Thời lượng | Phần | Nội dung |
+| --- | --- | --- |
+| 0:00-0:30 | Vấn đề | HR phải trả lời lặp lại các câu hỏi chính sách; nhân viên chờ câu trả lời cho nghỉ phép, bảo hiểm, onboarding và phúc lợi |
+| 0:30-1:00 | Solution pitch | HR Helpdesk AI trả lời HR có citations, bảo vệ quyền truy cập và escalation các tình huống nhạy cảm |
+| 1:00-1:30 | Slide kiến trúc | React frontend, FastAPI API, JWT/RBAC, RAG với Chroma, Gemini, Cohere rerank, Postgres |
+| 1:30-2:30 | Live demo: employee chat | Đăng nhập employee, hỏi chính sách nghỉ phép, hiển thị câu trả lời có citation và source excerpt |
+| 2:30-3:15 | Live demo: guardrails | Hỏi dữ liệu riêng tư hoặc jailbreak, hiển thị refusal/escalation behavior |
+| 3:15-4:00 | Live demo: HR admin | Đăng nhập admin, hiển thị document management, tickets, feedback và trending topic workflow |
+| 4:00-4:40 | Metrics | Hiển thị bảng benchmark: pass rate, citation rate, latency, groundedness, correctness |
+| 4:40-5:00 | Kết thúc | Production URL, cải thiện tiếp theo và mức độ sẵn sàng cho pilot |
 
-- Endpoint: `POST /api/v1/documents`.
-- Chỉ HR admin được upload tài liệu.
-- Tài liệu được chia chunk và lưu trong memory store.
-- Mỗi chunk lưu:
-  - document id
-  - title
-  - section
-  - excerpt
-  - visibility roles
-  - department ids
-  - embedding lexical
+Video link: TODO
 
-### 4.2 Retrieval
+## 6. Cost Report tùy chọn
 
-- Retrieval nằm ở `src/services/retrieval.py`.
-- Dùng gemini embedding cho MVP.
-- Có `MIN_SCORE` và `TOP_K` để kiểm soát citations.
-- RBAC được áp dụng trước khi trả citation, tránh để model thấy tài liệu ngoài quyền.
+Nguồn pricing đã kiểm tra ngày 2026-06-28:
 
-### 4.3 Citation response
+- Gemini API pricing: https://ai.google.dev/gemini-api/docs/pricing
+- Cohere pricing: https://cohere.com/pricing
 
-- Citation gồm document title, section, excerpt, score.
-- Khi có nguồn phù hợp, assistant trả lời theo contract `ChatResponse`.
-- Khi không có nguồn, hệ thống không bịa câu trả lời mà chuyển sang refusal/escalation.
+Giả định cho một pilot nội bộ nhỏ:
 
-## 5. Security & RBAC
+- 100 câu hỏi chat / user / tháng.
+- Mỗi generation request trung bình: 2,000 input tokens và 600 output tokens.
+- Mỗi query embedding trung bình: 120 text tokens / câu hỏi.
+- Ước tính generation dùng Gemini 3.1 Flash-Lite standard pricing từ Google AI: $0.25 / 1M input tokens và $1.50 / 1M output tokens.
+- Ước tính embedding dùng Gemini Embedding 2 text pricing: $0.20 / 1M text input tokens.
+- Chi phí hạ tầng, database, storage và Cohere shared API pricing sẽ chốt sau khi chọn deployment account và billing plan.
 
-Đã triển khai các lớp bảo vệ chính:
+Ước tính chi phí AI biến đổi / user / tháng:
 
-- JWT auth cho endpoint cần đăng nhập.
-- HR admin role mới được upload/list documents, run trending, list/update tickets.
-- Employee chỉ xem được tài liệu visibility cho `employee`.
-- Department admin chỉ xem được tài liệu đúng department.
-- Guardrails chặn:
-  - jailbreak prompt
-  - câu hỏi ngoài phạm vi HR
-  - yêu cầu dữ liệu nhạy cảm của người khác
-- Sensitive request tạo ticket thay vì trả lời trực tiếp.
+| Hạng mục chi phí | Công thức | Ước tính |
+| --- | --- | ---: |
+| Generation input | 100 * 2,000 / 1,000,000 * $0.25 | $0.050 |
+| Generation output | 100 * 600 / 1,000,000 * $1.50 | $0.090 |
+| Query embeddings | 100 * 120 / 1,000,000 * $0.20 | $0.002 |
+| Document ingestion embeddings | Amortized low-volume policy uploads | ~$0.010 |
+| AI subtotal ước tính | Trước infra và rerank | ~$0.15 / user / tháng |
 
-## 6. HR metrics & escalation
+Ghi chú về Cohere rerank:
 
-### 6.1 HR metrics
+- Trang pricing công khai của Cohere định nghĩa một rerank search unit là một query với tối đa 100 documents được xếp hạng.
+- Với MVP pilot, dùng Trial API key trong Cohere được giới hạn tổng cộng 1.000 request (lần gọi API) trên toàn bộ các endpoint mỗi tháng
 
-Module `src/services/hris.py` cung cấp mock HRIS data:
+Tổng ước tính pilot:
 
-- Số ngày phép còn lại.
-- Trạng thái bảo hiểm.
-- Trạng thái xét duyệt khen thưởng.
-
-Kết quả e2e xác nhận 5/5 lượt lookup trả đúng dữ liệu của `emp-001`, không cho truyền arbitrary `employee_id`.
-
-### 6.2 Escalation
-
-Module `src/services/tickets.py` hỗ trợ:
-
-- Tạo ticket từ chat.
-- Tạo ticket thủ công qua `/api/v1/escalations`.
-- HR admin list ticket.
-- HR admin update status, assignee.
-
-
-## 7. Trending & feedback
-
-### 7.1 Trending
-
-Module `src/services/trending.py`:
-
-- Ghi lại query sau mỗi lượt chat.
-- Xác định topic key như `nghi-phep`, `bao-hiem`, `luong`, `khen-thuong`.
-- HR admin chạy `/api/v1/admin/trending/run`.
-- Khi số lượng câu hỏi tương tự đạt threshold, hệ thống tạo trend pin.
-
-
-### 7.2 Feedback
-
-Module `src/services/feedback.py`:
-
-- Nhận feedback theo `message_id`.
-- Kiểm tra message tồn tại trước khi ghi nhận.
-- Hỗ trợ rating `up` hoặc `down`.
-
-## 8. Frontend
-
-Frontend tĩnh nằm tại `src/static/hr-helpdesk.html` và được serve tại `/app`.
-
-Các chức năng frontend đã có:
-
-- Login nhanh bằng employee/admin demo account.
-- Chat với API thật.
-- Hiển thị citations.
-- Hiển thị action/escalation khi có.
-- Upload tài liệu HR.
-- Run trending.
-- Xem ticket admin.
-- Gửi feedback.
-
-Ngoài ra có mockup UI ở `mockups/hr-helpdesk.html` dùng cho card C-008.
-
-## 9. Testing & verification
-
-### 9.1 Test coverage theo module
-
-- Auth: `tests/test_api/test_auth.py`
-- Chat contract: `tests/test_api/test_chat_slice.py`
-- Documents: `tests/test_api/test_documents.py`
-- RAG: `tests/test_agents/test_rag.py`
-- Guardrails/RBAC: `tests/test_agents/test_guardrails.py`, `tests/test_api/test_rbac.py`
-- HR metrics: `tests/test_api/test_hr_metrics.py`, `tests/test_agents/test_function_calling.py`
-- Tickets: `tests/test_api/test_tickets.py`
-- Trending: `tests/test_api/test_trending.py`
-- Feedback: `tests/test_api/test_feedback.py`
-- Static app: `tests/test_api/test_static_app.py`
-- Contract tests: `tests/test_api/test_contract.py`
-- E2E demo: `tests/e2e/test_demo_flow.py`
-
-### 9.2 Kết quả kiểm thử gần nhất
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest tests -q
-```
-
-Kết quả:
-
-```text
-49 passed in 1.18s
-```
-
-### 9.3 E2E success metrics
-
-Nguồn: `eval/results/report.md`
-
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| Seeded policy questions | 30 | 30 | PASS |
-| Cited policy answers | >= 90% | 30/30 (100.0%) | PASS |
-| P95 chat latency | < 10s | 0.003s | PASS |
-| Safe HR metric lookups | 5 | 5 | PASS |
-| Escalation tickets | 3 | 3 | PASS |
-| Trend pin after similar queries | 1 | Nghi phep | PASS |
-
-
-## 10. Trạng thái hiện tại
-
-Hệ thống đã đạt trạng thái MVP demo-ready:
-
-- Backend chạy được local.
-- Frontend mở được tại `/app`.
-- API contract có kiểm thử.
-- RAG-lite có citations.
-- RBAC/guardrails có kiểm thử.
-- HR metric lookup hoạt động.
-- Escalation ticket hoạt động.
-- Trending pin hoạt động.
-- Feedback hoạt động.
-- E2E verification đạt toàn bộ metric PRD.
-
+- AI variable cost: khoảng $0.15 / user / tháng theo các giả định bên trên.
 
