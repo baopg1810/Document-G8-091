@@ -81,7 +81,6 @@ Các kịch bản demo guardrails:
 | 4:00-4:40 | Metrics | Hiển thị bảng benchmark: pass rate, citation rate, latency, groundedness, correctness |
 | 4:40-5:00 | Kết thúc | Production URL, cải thiện tiếp theo và mức độ sẵn sàng cho pilot |
 
-Video link: TODO
 
 ## 6. Cost Report tùy chọn
 
