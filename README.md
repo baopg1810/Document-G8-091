@@ -8,7 +8,7 @@
 | Evaluation metrics | Đã có | Baseline lấy từ `eval/results/benchmark_results.json`, chạy lúc `2026-06-27T11:45:29Z` |
 | Guardrails | Đã có | RBAC, bộ lọc truy xuất, luật an toàn local, kiểm soát citation, xác nhận escalation |
 | Demo video draft | Đã có| https://drive.google.com/drive/folders/1w24udOA4Fn3snNF3M-PWqW6Q_E4cRHtk?usp=sharing |
-| Cost report | Đã có ước tính nháp | Ước tính chi phí AI biến đổi bên dưới; hạ tầng/rerank sẽ chốt sau khi chọn nền tảng deploy |
+| Cost report | Đã có ước tính nháp | Ước tính chi phí AI biến đổi bên dưới |
 
 ## 2. Tóm tắt sản phẩm
 
